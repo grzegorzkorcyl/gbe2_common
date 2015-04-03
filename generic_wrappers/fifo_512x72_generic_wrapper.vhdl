@@ -30,6 +30,22 @@ entity fifo_512x72_generic_wrapper is
 end entity fifo_512x72_generic_wrapper;
 
 architecture RTL of fifo_512x72_generic_wrapper is
+
+component fifo_512x72 is
+port (
+Data : in std_logic_vector(71 downto 0);
+WrClock : in std_logic;
+RdClock : in std_logic;
+WrEn : in std_logic;
+RdEn : in std_logic;
+Reset : in std_logic;
+RPReset : in std_logic;
+Q : out std_logic_vector(71 downto 0);
+Empty : out std_logic;
+Full : out std_logic;
+);
+end component;
+
 begin
 	LATTICE_ECP3_gen : if LATTICE_ECP3 = 1 generate
 		receive_fifo : fifo_512x72
