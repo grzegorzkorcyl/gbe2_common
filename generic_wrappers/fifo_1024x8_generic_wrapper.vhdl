@@ -16,10 +16,10 @@ entity fifo_1024x8_generic_wrapper is
 		RD_CLK_IN : in  std_logic;
 		RESET_IN  : in  std_logic;
 
-		DATA_IN   : in  std_logic_vector(8 downto 0);
+		DATA_IN   : in  std_logic_vector(7 downto 0);
 		WR_EN_IN  : in  std_logic;
 
-		DATA_OUT  : out std_logic_vector(8 downto 0);
+		DATA_OUT  : out std_logic_vector(7 downto 0);
 		RD_EN_IN  : in  std_logic;
 
 		FULL_OUT  : out std_logic;
