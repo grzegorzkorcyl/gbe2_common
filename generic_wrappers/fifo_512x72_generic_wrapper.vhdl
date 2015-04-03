@@ -30,25 +30,38 @@ entity fifo_512x72_generic_wrapper is
 end entity fifo_512x72_generic_wrapper;
 
 architecture RTL of fifo_512x72_generic_wrapper is
+	component lattice_ecp3_fifo_512x72 is
+		port(
+			Data    : in  std_logic_vector(71 downto 0);
+			WrClock : in  std_logic;
+			RdClock : in  std_logic;
+			WrEn    : in  std_logic;
+			RdEn    : in  std_logic;
+			Reset   : in  std_logic;
+			RPReset : in  std_logic;
+			Q       : out std_logic_vector(71 downto 0);
+			Empty   : out std_logic;
+			Full    : out std_logic
+		);
+	end component;
 
-component fifo_512x72 is
-port (
-Data : in std_logic_vector(71 downto 0);
-WrClock : in std_logic;
-RdClock : in std_logic;
-WrEn : in std_logic;
-RdEn : in std_logic;
-Reset : in std_logic;
-RPReset : in std_logic;
-Q : out std_logic_vector(71 downto 0);
-Empty : out std_logic;
-Full : out std_logic;
-);
-end component;
+	component xilinx_series7_ise_fifo_512x72 is
+		port(
+			din    : in  std_logic_vector(71 downto 0);
+			wr_clk : in  std_logic;
+			rd_clk : in  std_logic;
+			wr_en  : in  std_logic;
+			rd_en  : in  std_logic;
+			rst    : in  std_logic;
+			dout   : out std_logic_vector(71 downto 0);
+			empty  : out std_logic;
+			full   : out std_logic
+		);
+	end component;
 
 begin
 	LATTICE_ECP3_gen : if LATTICE_ECP3 = 1 generate
-		receive_fifo : fifo_512x72
+		receive_fifo : lattice_ecp3_fifo_512x72
 			port map(
 				Data    => DATA_IN,
 				WrClock => WR_CLK_IN,
@@ -64,7 +77,7 @@ begin
 	end generate LATTICE_ECP3_gen;
 
 	XILINX_SERIES7_ISE_gen : if XILINX_SERIES7_ISE = 1 generate
-		receive_fifo : fifo_512x72
+		receive_fifo : xilinx_series7_ise_fifo_512x72
 			port map(
 				din    => DATA_IN,
 				wr_clk => WR_CLK_IN,
