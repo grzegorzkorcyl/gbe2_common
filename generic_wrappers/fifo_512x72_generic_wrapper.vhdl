@@ -43,7 +43,7 @@ architecture RTL of fifo_512x72_generic_wrapper is
 			Empty   : out std_logic;
 			Full    : out std_logic
 		);
-	end component;
+	end component lattice_ecp3_fifo_512x72;
 
 	component xilinx_series7_ise_fifo_512x72 is
 		port(
@@ -57,7 +57,7 @@ architecture RTL of fifo_512x72_generic_wrapper is
 			empty  : out std_logic;
 			full   : out std_logic
 		);
-	end component;
+	end component xilinx_series7_ise_fifo_512x72;
 
 begin
 	LATTICE_ECP3_gen : if LATTICE_ECP3 = 1 generate
