@@ -5,6 +5,8 @@ use IEEE.NUMERIC_STD.ALL;
 use work.trb_net_gbe_components.all;
 use work.trb_net_gbe_protocols.all;
 
+--TODO: pull the link_ok etc ports up to main interface
+
 entity frame_rx is
 	generic(
 		SIMULATE              : integer range 0 to 1 := 0;

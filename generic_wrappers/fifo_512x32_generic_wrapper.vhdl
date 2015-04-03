@@ -32,14 +32,14 @@ end entity fifo_512x32_generic_wrapper;
 architecture RTL of fifo_512x32_generic_wrapper is
 	component lattice_ecp3_fifo_512x32 is
 		port(
-			Data    : in  std_logic_vector(71 downto 0);
+			Data    : in  std_logic_vector(31 downto 0);
 			WrClock : in  std_logic;
 			RdClock : in  std_logic;
 			WrEn    : in  std_logic;
 			RdEn    : in  std_logic;
 			Reset   : in  std_logic;
 			RPReset : in  std_logic;
-			Q       : out std_logic_vector(71 downto 0);
+			Q       : out std_logic_vector(31 downto 0);
 			Empty   : out std_logic;
 			Full    : out std_logic
 		);
@@ -47,13 +47,13 @@ architecture RTL of fifo_512x32_generic_wrapper is
 
 	component xilinx_series7_ise_fifo_512x32 is
 		port(
-			din    : in  std_logic_vector(71 downto 0);
+			din    : in  std_logic_vector(31 downto 0);
 			wr_clk : in  std_logic;
 			rd_clk : in  std_logic;
 			wr_en  : in  std_logic;
 			rd_en  : in  std_logic;
 			rst    : in  std_logic;
-			dout   : out std_logic_vector(71 downto 0);
+			dout   : out std_logic_vector(31 downto 0);
 			empty  : out std_logic;
 			full   : out std_logic
 		);
