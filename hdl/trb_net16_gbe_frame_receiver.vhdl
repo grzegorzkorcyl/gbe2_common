@@ -280,7 +280,7 @@ begin
 	SAVED_PROTO_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_proto <= (others => '0');
 			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"07") then
 				saved_proto <= MAC_RXD_IN;
@@ -293,7 +293,7 @@ begin
 	SAVED_SRC_IP_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_src_ip <= (others => '0');
 			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"0a") then
 				saved_src_ip(7 downto 0) <= MAC_RXD_IN;
@@ -312,7 +312,7 @@ begin
 	SAVED_DEST_IP_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_dest_ip <= (others => '0');
 			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"0e") then
 				saved_dest_ip(7 downto 0) <= MAC_RXD_IN;
@@ -331,7 +331,7 @@ begin
 	SAVED_SRC_UDP_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_src_udp <= (others => '0');
 			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"12") then
 				saved_src_udp(15 downto 8) <= MAC_RXD_IN;
@@ -346,7 +346,7 @@ begin
 	SAVED_DEST_UDP_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_dest_udp <= (others => '0');
 			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"14") then
 				saved_dest_udp(15 downto 8) <= MAC_RXD_IN;
@@ -403,7 +403,7 @@ begin
 	SAVED_SRC_MAC_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_src_mac <= (others => '0');
 			elsif (filter_current_state = REMOVE_DEST) and (remove_ctr = x"03") then
 				saved_src_mac(7 downto 0) <= MAC_RXD_IN;
@@ -427,7 +427,7 @@ begin
 	SAVED_FRAME_TYPE_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_frame_type <= (others => '0');
 			elsif (filter_current_state = REMOVE_SRC) and (remove_ctr = x"09") then
 				saved_frame_type(15 downto 8) <= MAC_RXD_IN;
@@ -448,7 +448,7 @@ begin
 	SAVED_VID_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_vid <= (others => '0');
 			elsif (filter_current_state = REMOVE_TYPE and remove_ctr = x"0b" and saved_frame_type = x"8100") then
 				saved_vid(15 downto 8) <= MAC_RXD_IN;
