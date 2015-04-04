@@ -364,6 +364,23 @@ begin
 		end if;
 	end process SAVED_DEST_UDP_PROC;
 
+	SAVED_UDP_CHECKSUM_PROC : process(RX_MAC_CLK)
+	begin
+		if rising_edge(RX_MAC_CLK) then
+			if (filter_current_state = CLEANUP) then
+				saved_checksum <= (others => '0');
+			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"18") then
+				saved_checksum(15 downto 8) <= MAC_RXD_IN;
+				saved_checksum(7 downto 0)  <= x"00";
+			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"19") then
+				saved_checksum(7 downto 0)  <= MAC_RXD_IN;
+				saved_checksum(15 downto 8) <= saved_checksum(15 downto 8);
+			else
+				saved_checksum <= saved_checksum;
+			end if;
+		end if;
+	end process SAVED_UDP_CHECKSUM_PROC;
+
 	-- saves the destination mac address of the incoming frame
 	SAVED_DEST_MAC_PROC : process(RX_MAC_CLK)
 	begin
