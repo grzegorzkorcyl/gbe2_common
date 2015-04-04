@@ -88,7 +88,7 @@ begin
 			CLK                    => sys_clk,
 			CLK_125                => rx_clk,
 			RESET                  => RESET,
-			MC_RESET_LINK_IN       => '0',
+			MC_RESET_LINK_IN       => RESET,
 			RC_FRAME_WAITING_IN    => rc_frame_ready,
 			RC_LOADING_DONE_OUT    => rc_loading_done,
 			RC_DATA_IN             => rc_q,
