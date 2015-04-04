@@ -83,11 +83,11 @@ architecture trb_net16_gbe_receive_control of trb_net16_gbe_receive_control is
 	signal state             : std_logic_vector(3 downto 0);
 	signal proto_code        : std_logic_vector(c_MAX_PROTOCOLS - 1 downto 0);
 	signal reset_prioritizer : std_logic;
-
-	-- debug only
-	signal saved_proto : std_logic_vector(c_MAX_PROTOCOLS - 1 downto 0);
+	signal zeros             : std_logic_vector(c_MAX_PROTOCOLS - 1 downto 0);
+	signal saved_proto       : std_logic_vector(c_MAX_PROTOCOLS - 1 downto 0);
 
 begin
+	zeros                   <= (others => '0');
 	FR_RD_EN_OUT            <= RC_RD_EN_IN;
 	RC_Q_OUT                <= RC_DATA_IN;
 	RC_FRAME_SIZE_OUT       <= FR_FRAME_SIZE_IN;
@@ -114,7 +114,7 @@ begin
 
 	reset_prioritizer <= '1' when load_current_state = IDLE else '0';
 
-	RC_FRAME_PROTO_OUT <= proto_code when RC_REDIRECT_TRAFFIC_IN = '0' else b"0000"; -- no more ones as the incorrect value, last slot for Trash
+	RC_FRAME_PROTO_OUT <= proto_code when RC_REDIRECT_TRAFFIC_IN = '0' else zeros; -- no more ones as the incorrect value, last slot for Trash
 
 	LOAD_MACHINE_PROC : process(CLK, RESET)
 	begin
