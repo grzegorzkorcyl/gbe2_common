@@ -48,8 +48,8 @@ begin
 			MAC_RXD_IN              => client_rxd1,
 			MAC_RX_DV_IN            => client_rx_dv1,
 			MAC_RX_EOF_IN           => client_good_frame1,
-			RC_RD_EN_IN             => '0',
-			RC_Q_OUT                => open,
+			RC_RD_EN_IN             => rc_rd_en,
+			RC_Q_OUT                => rc_q,
 			RC_FRAME_WAITING_OUT    => rc_frame_ready,
 			RC_LOADING_DONE_IN      => rc_loading_done,
 			RC_FRAME_SIZE_OUT       => rc_frame_size,
@@ -153,6 +153,8 @@ begin
 
 		wait for 1 us;
 
+		wait until rising_edge(rx_clk);
+		client_rx_dv1 <= '1';
 		-- dest mac
 		client_rxd1 <= x"ff";
 		wait until rising_edge(rx_clk);
