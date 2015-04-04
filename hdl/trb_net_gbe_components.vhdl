@@ -8,6 +8,8 @@ package trb_net_gbe_components is
 	function or_all(arg : std_logic_vector) return std_logic;
 	function and_all(arg : std_logic_vector) return std_logic;
 
+	type hist_array is array(31 downto 0) of std_logic_vector(31 downto 0);
+
 end package;
 
 package body trb_net_gbe_components is
