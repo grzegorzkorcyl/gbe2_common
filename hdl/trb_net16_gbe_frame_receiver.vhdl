@@ -542,6 +542,8 @@ begin
 		end if;
 	end process RX_FIFO_SYNC;
 
+	fifo_rd_en <= FR_RD_EN_IN;
+
 	sizes_d(15 downto 0)  <= rx_bytes_ctr;
 	sizes_d(31 downto 16) <= saved_frame_type;
 	sizes_fifo : entity work.fifo_512x32_generic_wrapper
