@@ -46,9 +46,9 @@ begin
 			RESET                   => RESET,
 			MY_MAC_IN               => my_mac,
 			MAC_RX_CLK_IN           => rx_clk,
-			MAC_RXD_IN              => client_rxd1,
+			client_rxd1             => client_rxd1,
 			MAC_RX_DV_IN            => client_rx_dv1,
-			MAC_RX_EOF_IN           => client_good_frame1,
+			client_good_frame1      => client_good_frame1,
 			RC_RD_EN_IN             => '0',
 			RC_Q_OUT                => open,
 			RC_FRAME_WAITING_OUT    => rc_frame_ready,
@@ -152,10 +152,10 @@ begin
 		reset <= '0';
 		wait for 100 ns;
 
-		wait until rising_edge(rx_clk);
-		client_rx_dv1 <= '1';
+		wait for 1 us;
+
 		-- dest mac
-		client_rxd1   <= x"ff";
+		client_rxd1 <= x"ff";
 		wait until rising_edge(rx_clk);
 		client_rxd1 <= x"ff";
 		wait until rising_edge(rx_clk);
@@ -194,17 +194,17 @@ begin
 		wait until rising_edge(rx_clk);
 		client_rxd1 <= x"5a";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"01";           -- id
+		client_rxd1 <= x"49";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"03";           -- id
+		client_rxd1 <= x"00";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"00";           -- f/o
+		client_rxd1 <= x"00";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"00";           -- f/o
+		client_rxd1 <= x"00";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"ff";           -- ttl
+		client_rxd1 <= x"ff";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"11";           -- udp
+		client_rxd1 <= x"01";
 		wait until rising_edge(rx_clk);
 		client_rxd1 <= x"cc";
 		wait until rising_edge(rx_clk);
@@ -225,44 +225,175 @@ begin
 		client_rxd1 <= x"00";
 		wait until rising_edge(rx_clk);
 		client_rxd1 <= x"02";
-		-- udp headers
+		-- ping headers
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"61";
+		client_rxd1 <= x"08";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"a8";
+		client_rxd1 <= x"00";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"61";
+		client_rxd1 <= x"47";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"a8";
+		client_rxd1 <= x"d3";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"02";
+		client_rxd1 <= x"0d";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"2c";
+		client_rxd1 <= x"3c";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"aa";
+		client_rxd1 <= x"00";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"bb";
-		-- payload
+		client_rxd1 <= x"01";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"ab";
-
-		for i in 1 to 100 loop
-			wait until rising_edge(rx_clk);
-			client_rxd1 <= std_logic_vector(to_unsigned(i, 8));
-		end loop;
-
+		-- ping data
+		client_rxd1 <= x"8c";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"cd";
+		client_rxd1 <= x"da";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"ef";
+		client_rxd1 <= x"e7";
 		wait until rising_edge(rx_clk);
-		client_rxd1 <= x"aa";
+		client_rxd1 <= x"4d";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"36";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"c4";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"0d";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"00";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"08";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"09";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"0a";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"0b";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"0c";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"0d";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"0e";
+		wait until rising_edge(rx_clk);
+		client_rxd1 <= x"0f";
 		wait until rising_edge(rx_clk);
 		client_good_frame1 <= '1';
+		client_rxd1        <= x"aa";
 
 		wait until rising_edge(rx_clk);
 		client_rx_dv1      <= '0';
 		client_good_frame1 <= '0';
+
+		--		wait until rising_edge(rx_clk);
+		--		client_rx_dv1 <= '1';
+		--		-- dest mac
+		--		client_rxd1   <= x"ff";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ff";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ff";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ff";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ff";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ff";
+		--		wait until rising_edge(rx_clk);
+		--		-- src mac
+		--		client_rxd1 <= x"00";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"aa";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"bb";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"cc";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"dd";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ee";
+		--		wait until rising_edge(rx_clk);
+		--		-- frame type
+		--		client_rxd1 <= x"08";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"00";
+		--		wait until rising_edge(rx_clk);
+		--		-- ip headers
+		--		client_rxd1 <= x"45";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"10";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"01";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"5a";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"01";           -- id
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"03";           -- id
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"00";           -- f/o
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"00";           -- f/o
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ff";           -- ttl
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"11";           -- udp
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"cc";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"cc";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"c0";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"a8";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"00";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"01";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"c0";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"a8";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"00";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"02";
+		--		-- udp headers
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"61";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"a8";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"61";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"a8";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"02";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"2c";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"aa";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"bb";
+		--		-- payload
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ab";
+		--
+		--		for i in 1 to 100 loop
+		--			wait until rising_edge(rx_clk);
+		--			client_rxd1 <= std_logic_vector(to_unsigned(i, 8));
+		--		end loop;
+		--
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"cd";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"ef";
+		--		wait until rising_edge(rx_clk);
+		--		client_rxd1 <= x"aa";
+		--		wait until rising_edge(rx_clk);
+		--		client_good_frame1 <= '1';
+		--
+		--		wait until rising_edge(rx_clk);
+		--		client_rx_dv1      <= '0';
+		--		client_good_frame1 <= '0';
 
 		wait;
 
