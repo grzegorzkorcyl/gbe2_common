@@ -32,7 +32,6 @@ architecture Behavioral of main_control_testbench is
 	signal sys_clk                    : std_logic;
 
 begin
-	my_mac <= x"1111efbe0000";
 
 	frame_rx_i : entity work.frame_rx
 		generic map(
