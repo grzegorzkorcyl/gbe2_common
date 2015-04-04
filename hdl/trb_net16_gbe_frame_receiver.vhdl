@@ -101,8 +101,6 @@ architecture trb_net16_gbe_frame_receiver of trb_net16_gbe_frame_receiver is
 	-- debug signals
 	signal state          : std_logic_vector(3 downto 0);
 
-	signal rx_data, fr_q : std_logic_vector(8 downto 0);
-
 	signal fr_src_ip, fr_dest_ip                                  : std_logic_vector(31 downto 0);
 	signal fr_dest_udp, fr_src_udp, fr_frame_size, fr_frame_proto : std_logic_vector(15 downto 0);
 	signal fr_dest_mac, fr_src_mac                                : std_logic_vector(47 downto 0);
@@ -515,8 +513,8 @@ begin
 	RX_FIFO_SYNC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			rx_data(8)          <= MAC_RX_EOF_IN;
-			rx_data(7 downto 0) <= MAC_RXD_IN;
+			rec_d(8)          <= MAC_RX_EOF_IN;
+			rec_d(7 downto 0) <= MAC_RXD_IN;
 
 			if (MAC_RX_EN_IN = '1') then
 				if (filter_current_state = SAVE_FRAME) then
@@ -663,7 +661,7 @@ begin
 			FR_SRC_UDP_PORT_OUT     <= fr_src_udp;
 			FR_FRAME_PROTO_OUT      <= fr_frame_proto;
 			FR_FRAME_SIZE_OUT       <= fr_frame_size;
-			FR_Q_OUT                <= fr_q;
+			FR_Q_OUT                <= rec_o;
 		end if;
 	end process;
 
