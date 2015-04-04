@@ -42,7 +42,7 @@ entity trb_net16_gbe_type_validator is
 
 		VALID_OUT                : out std_logic;
 
-		DEBUG_OUT                : std_logic_vector(255 downto 0)
+		DEBUG_OUT                : out std_logic_vector(255 downto 0)
 	);
 end trb_net16_gbe_type_validator;
 
