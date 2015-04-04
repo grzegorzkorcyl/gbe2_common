@@ -558,14 +558,7 @@ begin
 			EMPTY_OUT => sizes_fifo_empty,
 			DEBUG_OUT => open
 		);
-	FR_FRAME_SIZE_OUT_PROC : process(ip_o, sizes_o)
-	begin
-		if (ip_o(71 downto 64) = x"06") then
-			FR_FRAME_SIZE_OUT <= sizes_o(15 downto 0) + x"27";
-		else
-			FR_FRAME_SIZE_OUT <= sizes_o(15 downto 0);
-		end if;
-	end process FR_FRAME_SIZE_OUT_PROC;
+	FR_FRAME_SIZE_OUT <= sizes_o(15 downto 0);
 	FR_FRAME_PROTO_OUT <= sizes_o(31 downto 16);
 
 	macs_d(47 downto 0)  <= saved_src_mac;
