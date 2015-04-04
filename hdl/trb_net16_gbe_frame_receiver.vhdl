@@ -99,7 +99,7 @@ architecture trb_net16_gbe_frame_receiver of trb_net16_gbe_frame_receiver is
 	signal error_frames_ctr : std_logic_vector(15 downto 0);
 
 	-- debug signals
-	signal state          : std_logic_vector(3 downto 0);
+	signal state : std_logic_vector(3 downto 0);
 
 	signal fr_src_ip, fr_dest_ip                                  : std_logic_vector(31 downto 0);
 	signal fr_dest_udp, fr_src_udp, fr_frame_size, fr_frame_proto : std_logic_vector(15 downto 0);
@@ -558,8 +558,6 @@ begin
 			EMPTY_OUT => sizes_fifo_empty,
 			DEBUG_OUT => open
 		);
-	FR_FRAME_SIZE_OUT <= sizes_o(15 downto 0);
-	FR_FRAME_PROTO_OUT <= sizes_o(31 downto 16);
 
 	macs_d(47 downto 0)  <= saved_src_mac;
 	macs_d(63 downto 48) <= saved_src_udp;
@@ -584,9 +582,6 @@ begin
 			EMPTY_OUT => open,
 			DEBUG_OUT => open
 		);
-	FR_SRC_MAC_ADDRESS_OUT          <= macs_o(47 downto 0);
-	FR_SRC_UDP_PORT_OUT             <= macs_o(63 downto 48);
-	FR_UDP_CHECKSUM_OUT(7 downto 0) <= macs_o(71 downto 64);
 
 	macd_d(47 downto 0)  <= saved_dest_mac;
 	macd_d(63 downto 48) <= saved_dest_udp;
@@ -611,9 +606,6 @@ begin
 			EMPTY_OUT => open,
 			DEBUG_OUT => open
 		);
-	FR_DEST_MAC_ADDRESS_OUT          <= macd_o(47 downto 0);
-	FR_DEST_UDP_PORT_OUT             <= macd_o(63 downto 48);
-	FR_UDP_CHECKSUM_OUT(15 downto 8) <= macd_o(71 downto 64);
 
 	ip_d(31 downto 0)  <= saved_src_ip;
 	ip_d(63 downto 32) <= saved_dest_ip;
@@ -638,23 +630,22 @@ begin
 			EMPTY_OUT => open,
 			DEBUG_OUT => open
 		);
-	FR_SRC_IP_ADDRESS_OUT  <= ip_o(31 downto 0);
-	FR_DEST_IP_ADDRESS_OUT <= ip_o(63 downto 32);
-	FR_IP_PROTOCOL_OUT     <= ip_o(71 downto 64);
 
 	process(CLK)
 	begin
 		if rising_edge(CLK) then
-			FR_SRC_IP_ADDRESS_OUT   <= fr_src_ip;
-			FR_DEST_IP_ADDRESS_OUT  <= fr_dest_ip;
-			FR_IP_PROTOCOL_OUT      <= fr_ip_proto;
-			FR_DEST_UDP_PORT_OUT    <= fr_dest_udp;
-			FR_DEST_MAC_ADDRESS_OUT <= fr_dest_mac;
-			FR_SRC_MAC_ADDRESS_OUT  <= fr_src_mac;
-			FR_SRC_UDP_PORT_OUT     <= fr_src_udp;
-			FR_FRAME_PROTO_OUT      <= fr_frame_proto;
-			FR_FRAME_SIZE_OUT       <= fr_frame_size;
-			FR_Q_OUT                <= rec_o;
+			FR_SRC_IP_ADDRESS_OUT            <= ip_o(31 downto 0);
+			FR_DEST_IP_ADDRESS_OUT           <= ip_o(63 downto 32);
+			FR_IP_PROTOCOL_OUT               <= ip_o(71 downto 64);
+			FR_DEST_UDP_PORT_OUT             <= macd_o(63 downto 48);
+			FR_DEST_MAC_ADDRESS_OUT          <= macd_o(47 downto 0);
+			FR_SRC_MAC_ADDRESS_OUT           <= macs_o(47 downto 0);
+			FR_SRC_UDP_PORT_OUT              <= macs_o(63 downto 48);
+			FR_FRAME_PROTO_OUT               <= sizes_o(31 downto 16);
+			FR_FRAME_SIZE_OUT                <= sizes_o(15 downto 0);
+			FR_UDP_CHECKSUM_OUT(7 downto 0)  <= macs_o(71 downto 64);
+			FR_UDP_CHECKSUM_OUT(15 downto 8) <= macd_o(71 downto 64);
+			FR_Q_OUT                         <= rec_o;
 		end if;
 	end process;
 
