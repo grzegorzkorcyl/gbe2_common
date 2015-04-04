@@ -96,14 +96,9 @@ architecture trb_net16_gbe_frame_receiver of trb_net16_gbe_frame_receiver is
 	signal saved_dest_udp   : std_logic_vector(15 downto 0);
 	signal saved_checksum   : std_logic_vector(15 downto 0);
 
-	signal dump  : std_logic_vector(7 downto 0);
-	signal dump2 : std_logic_vector(7 downto 0);
-
 	signal error_frames_ctr : std_logic_vector(15 downto 0);
 
 	-- debug signals
-	signal dbg_rec_frames : std_logic_vector(31 downto 0);
-	signal dbg_drp_frames : std_logic_vector(31 downto 0);
 	signal state          : std_logic_vector(3 downto 0);
 
 	signal rx_data, fr_q : std_logic_vector(8 downto 0);
@@ -112,7 +107,6 @@ architecture trb_net16_gbe_frame_receiver of trb_net16_gbe_frame_receiver is
 	signal fr_dest_udp, fr_src_udp, fr_frame_size, fr_frame_proto : std_logic_vector(15 downto 0);
 	signal fr_dest_mac, fr_src_mac                                : std_logic_vector(47 downto 0);
 	signal fr_ip_proto                                            : std_logic_vector(7 downto 0);
-	signal mon_rec_bytes                                          : std_logic_vector(31 downto 0);
 
 	signal ip_d, macs_d, macd_d, ip_o, macs_o, macd_o : std_logic_vector(71 downto 0);
 	signal sizes_d, sizes_o                           : std_logic_vector(31 downto 0);
@@ -367,7 +361,7 @@ begin
 	SAVED_UDP_CHECKSUM_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
+			if (filter_current_state = IDLE) then
 				saved_checksum <= (others => '0');
 			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"18") then
 				saved_checksum(15 downto 8) <= MAC_RXD_IN;
