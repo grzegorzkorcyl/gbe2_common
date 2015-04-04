@@ -654,11 +654,12 @@ begin
 		-- otherwise proceed in a normal way
 		else
 			FR_Q_OUT(7 downto 0) <= rec_o(7 downto 0);
-			if (std_logic_vector(read_bytes_ctr) = sizes_o(15 downto 0) and sizes_o(15 downto 0) /= x"0000") then
-				FR_Q_OUT(8) <= '1';
-			else
-				FR_Q_OUT(8) <= '0';
-			end if;
+			FR_Q_OUT(8) <= rec_o(8);
+--			if (std_logic_vector(read_bytes_ctr) = sizes_o(15 downto 0) and sizes_o(15 downto 0) /= x"0000") then
+--				FR_Q_OUT(8) <= '1';
+--			else
+--				FR_Q_OUT(8) <= '0';
+--			end if;
 		end if;
 	end process FR_Q_OUT_PROC;
 
