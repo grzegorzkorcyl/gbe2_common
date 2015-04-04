@@ -81,8 +81,8 @@ begin
 			INCLUDE_DHCP          => '1',
 			INCLUDE_ARP           => '1',
 			INCLUDE_PING          => '1',
-			READOUT_BUFFER_SIZE   => 0,
-			SLOWCTRL_BUFFER_SIZE  => 0
+			READOUT_BUFFER_SIZE   => 1,
+			SLOWCTRL_BUFFER_SIZE  => 1
 		)
 		port map(
 			CLK                    => sys_clk,
