@@ -19,7 +19,7 @@ entity frame_rx is
 	port(
 		RESET                   : in  std_logic;
 		MY_MAC_IN               : in  std_logic_vector(47 downto 0);
-
+		SYS_CLK                 : in  std_logic;
 		-- connections to emac
 		MAC_RX_CLK_IN           : in  std_logic;
 		MAC_RXD_IN              : in  std_logic_vector(7 downto 0);
@@ -78,7 +78,7 @@ begin
 			XILINX_SERIES7_VIVADO => XILINX_SERIES7_VIVADO
 		)
 		port map(
-			CLK                     => MAC_RX_CLK_IN,
+			CLK                     => SYS_CLK,
 			RESET                   => RESET,
 			LINK_OK_IN              => '1',
 			ALLOW_RX_IN             => '1',

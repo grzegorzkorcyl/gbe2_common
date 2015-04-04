@@ -9,7 +9,7 @@ entity frame_rx_testbench is
 end frame_rx_testbench;
 
 architecture Behavioral of frame_rx_testbench is
-	signal rx_clk                            : std_logic;
+	signal rx_clk, sys_clk                   : std_logic;
 	signal reset                             : std_logic;
 	signal client_rxd1                       : std_logic_vector(7 downto 0);
 	signal client_rx_dv1, client_good_frame1 : std_logic;
@@ -25,6 +25,7 @@ begin
 		)
 		port map(
 			RESET                   => RESET,
+			SYS_CLK                 => sys_clk,
 			MY_MAC_IN               => x"1111efbe0000",
 			MAC_RX_CLK_IN           => rx_clk,
 			MAC_RXD_IN              => client_rxd1,
@@ -54,6 +55,14 @@ begin
 		wait for 4 ns;
 		rx_clk <= '0';
 		wait for 4 ns;
+	end process;
+
+	process
+	begin
+		sys_clk <= '1';
+		wait for 5 ns;
+		sys_clk <= '0';
+		wait for 5 ns;
 	end process;
 
 	testbench_process : process

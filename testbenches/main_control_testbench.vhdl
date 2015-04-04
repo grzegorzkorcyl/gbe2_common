@@ -32,7 +32,6 @@ architecture Behavioral of main_control_testbench is
 	signal sys_clk                    : std_logic;
 
 begin
-
 	frame_rx_i : entity work.frame_rx
 		generic map(
 			SIMULATE              => 1,
@@ -43,6 +42,7 @@ begin
 		)
 		port map(
 			RESET                   => RESET,
+			SYS_CLK                 => sys_clk,
 			MY_MAC_IN               => my_mac,
 			MAC_RX_CLK_IN           => rx_clk,
 			MAC_RXD_IN              => client_rxd1,
@@ -156,7 +156,7 @@ begin
 		wait until rising_edge(rx_clk);
 		client_rx_dv1 <= '1';
 		-- dest mac
-		client_rxd1 <= x"ff";
+		client_rxd1   <= x"ff";
 		wait until rising_edge(rx_clk);
 		client_rxd1 <= x"ff";
 		wait until rising_edge(rx_clk);
