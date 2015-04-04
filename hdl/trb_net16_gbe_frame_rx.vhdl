@@ -126,7 +126,7 @@ begin
 			XILINX_SERIES7_VIVADO => XILINX_SERIES7_VIVADO
 		)
 		port map(
-			CLK                     => MAC_RX_CLK_IN,
+			CLK                     => SYS_CLK,
 			RESET                   => RESET,
 
 			-- signals to/from frame_receiver

@@ -42,7 +42,7 @@ begin
 		)
 		port map(
 			RESET                   => RESET,
-			SYS_CLK                 => rx_clk,
+			SYS_CLK                 => sys_clk,
 			MY_MAC_IN               => my_mac,
 			MAC_RX_CLK_IN           => rx_clk,
 			MAC_RXD_IN              => client_rxd1,
@@ -84,7 +84,7 @@ begin
 			SLOWCTRL_BUFFER_SIZE  => 1
 		)
 		port map(
-			CLK                    => rx_clk,
+			CLK                    => sys_clk,
 			CLK_125                => rx_clk,
 			RESET                  => RESET,
 			MC_RESET_LINK_IN       => RESET,
