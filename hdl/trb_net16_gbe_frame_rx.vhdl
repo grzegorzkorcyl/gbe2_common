@@ -106,7 +106,6 @@ begin
 			FR_ALLOWED_TYPES_IN     => (others => '1'),
 			FR_ALLOWED_IP_IN        => (others => '1'),
 			FR_ALLOWED_UDP_IN       => (others => '1'),
-			FR_ALLOWED_TCP_IN       => (others => '1'),
 			FR_VLAN_ID_IN           => vlan_id,
 			FR_SRC_MAC_ADDRESS_OUT  => fr_src_mac,
 			FR_DEST_MAC_ADDRESS_OUT => fr_dest_mac,
@@ -114,10 +113,7 @@ begin
 			FR_DEST_IP_ADDRESS_OUT  => fr_dest_ip,
 			FR_SRC_UDP_PORT_OUT     => fr_src_udp,
 			FR_DEST_UDP_PORT_OUT    => fr_dest_udp,
-			FR_ID_IP_OUT            => fr_id_ip,
-			FR_FO_IP_OUT            => fr_fo_ip,
 			FR_UDP_CHECKSUM_OUT     => fr_cs_out,
-			FR_REDIRECT_TRAFFIC_IN  => RC_REDIRECT_TRAFFIC_IN,
 			DEBUG_OUT               => open
 		);
 

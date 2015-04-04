@@ -12,8 +12,7 @@ use work.trb_net_gbe_protocols.all;
 -- otherwise, after receiving all bytes, FR_FRAME_VALID_OUT keeps low and the fifo is cleared
 -- also a part of addresses assignemt has to be done here
 
---TODO: register the fifo outputs
---TODO: register the tcp fifo rd/wr operations
+--TODO: register the output ports signals
 
 entity trb_net16_gbe_frame_receiver is
 	generic(
@@ -25,8 +24,6 @@ entity trb_net16_gbe_frame_receiver is
 		XILINX_SERIES7_VIVADO : integer range 0 to 1 := 0
 	);
 	port(
-
-		-- Common ports
 		CLK                     : in  std_logic; -- system clock
 		RESET                   : in  std_logic;
 		LINK_OK_IN              : in  std_logic;
@@ -34,7 +31,7 @@ entity trb_net16_gbe_frame_receiver is
 		RX_MAC_CLK              : in  std_logic; -- receiver serdes clock
 		MY_MAC_IN               : in  std_logic_vector(47 downto 0);
 
-		-- input signals from mac
+		-- input signals from TS_MAC
 		MAC_RX_EOF_IN           : in  std_logic;
 		MAC_RX_ER_IN            : in  std_logic;
 		MAC_RXD_IN              : in  std_logic_vector(7 downto 0);
@@ -55,7 +52,6 @@ entity trb_net16_gbe_frame_receiver is
 		FR_ALLOWED_TYPES_IN     : in  std_logic_vector(31 downto 0);
 		FR_ALLOWED_IP_IN        : in  std_logic_vector(31 downto 0);
 		FR_ALLOWED_UDP_IN       : in  std_logic_vector(31 downto 0);
-		FR_ALLOWED_TCP_IN       : in  std_logic_vector(31 downto 0);
 		FR_VLAN_ID_IN           : in  std_logic_vector(31 downto 0);
 
 		FR_SRC_MAC_ADDRESS_OUT  : out std_logic_vector(47 downto 0);
@@ -64,21 +60,17 @@ entity trb_net16_gbe_frame_receiver is
 		FR_DEST_IP_ADDRESS_OUT  : out std_logic_vector(31 downto 0);
 		FR_SRC_UDP_PORT_OUT     : out std_logic_vector(15 downto 0);
 		FR_DEST_UDP_PORT_OUT    : out std_logic_vector(15 downto 0);
-
-		FR_ID_IP_OUT            : out std_logic_vector(15 downto 0);
-		FR_FO_IP_OUT            : out std_logic_vector(15 downto 0);
 		FR_UDP_CHECKSUM_OUT     : out std_logic_vector(15 downto 0);
-		FR_REDIRECT_TRAFFIC_IN  : in  std_logic;
 
-		-- Debug ports
-		DEBUG_OUT               : out std_logic_vector(95 downto 0)
+		DEBUG_OUT               : out std_logic_vector(255 downto 0)
 	);
 end trb_net16_gbe_frame_receiver;
 
 architecture trb_net16_gbe_frame_receiver of trb_net16_gbe_frame_receiver is
-	type filter_states is (IDLE, REMOVE_DEST, REMOVE_SRC, REMOVE_TYPE, SAVE_FRAME, DROP_FRAME, REMOVE_VID, REMOVE_VTYPE, REMOVE_IP, REMOVE_UDP, REMOVE_TCP, DECIDE, CLEANUP);
+	type filter_states is (IDLE, REMOVE_DEST, REMOVE_SRC, REMOVE_TYPE, SAVE_FRAME, DROP_FRAME, REMOVE_VID, REMOVE_VTYPE, REMOVE_IP, REMOVE_UDP, DECIDE, CLEANUP);
 	signal filter_current_state, filter_next_state : filter_states;
 
+	signal fifo_wr_en            : std_logic;
 	signal rx_bytes_ctr          : std_logic_vector(15 downto 0);
 	signal frame_valid_q         : std_logic;
 	signal delayed_frame_valid   : std_logic;
@@ -91,9 +83,9 @@ architecture trb_net16_gbe_frame_receiver of trb_net16_gbe_frame_receiver is
 
 	signal remove_ctr       : std_logic_vector(7 downto 0);
 	signal new_frame        : std_logic;
-	signal new_frame_lock   : std_logic;
+	signal new_frame_lock   : std_logic                     := '0';
 	signal saved_frame_type : std_logic_vector(15 downto 0);
-	signal saved_vid        : std_logic_vector(15 downto 0);
+	signal saved_vid        : std_logic_vector(15 downto 0) := (others => '0');
 	signal saved_src_mac    : std_logic_vector(47 downto 0);
 	signal saved_dest_mac   : std_logic_vector(47 downto 0);
 	signal frame_type_valid : std_logic;
@@ -102,24 +94,30 @@ architecture trb_net16_gbe_frame_receiver of trb_net16_gbe_frame_receiver is
 	signal saved_dest_ip    : std_logic_vector(31 downto 0);
 	signal saved_src_udp    : std_logic_vector(15 downto 0);
 	signal saved_dest_udp   : std_logic_vector(15 downto 0);
+	signal saved_checksum   : std_logic_vector(15 downto 0);
 
-	signal state : std_logic_vector(3 downto 0);
+	signal dump  : std_logic_vector(7 downto 0);
+	signal dump2 : std_logic_vector(7 downto 0);
 
-	signal saved_id_ip, saved_fo_ip : std_logic_vector(15 downto 0);
-	signal ip_h_d, ip_h_o           : std_logic_vector(31 downto 0);
-	signal previous_id              : std_logic_vector(15 downto 0);
-	signal prev_udp_dst_port        : std_logic_vector(15 downto 0);
-	signal prev_udp_src_port        : std_logic_vector(15 downto 0);
-	signal saved_checksum           : std_logic_vector(15 downto 0);
+	signal error_frames_ctr : std_logic_vector(15 downto 0);
+
+	-- debug signals
+	signal dbg_rec_frames : std_logic_vector(31 downto 0);
+	signal dbg_drp_frames : std_logic_vector(31 downto 0);
+	signal state          : std_logic_vector(3 downto 0);
+
+	signal rx_data, fr_q : std_logic_vector(8 downto 0);
+
+	signal fr_src_ip, fr_dest_ip                                  : std_logic_vector(31 downto 0);
+	signal fr_dest_udp, fr_src_udp, fr_frame_size, fr_frame_proto : std_logic_vector(15 downto 0);
+	signal fr_dest_mac, fr_src_mac                                : std_logic_vector(47 downto 0);
+	signal fr_ip_proto                                            : std_logic_vector(7 downto 0);
+	signal mon_rec_bytes                                          : std_logic_vector(31 downto 0);
 
 	signal ip_d, macs_d, macd_d, ip_o, macs_o, macd_o : std_logic_vector(71 downto 0);
 	signal sizes_d, sizes_o                           : std_logic_vector(31 downto 0);
 	signal rec_d, rec_o                               : std_logic_vector(8 downto 0);
-
-	signal read_bytes_ctr                  : unsigned(15 downto 0);
-	signal tcp_wr_en, tcp_rd_en, tcp_reset : std_logic;
-	signal tcp_q                           : std_logic_vector(7 downto 0);
-	signal fifo_rd_en, fifo_wr_en          : std_logic;
+	signal fifo_rd_en                                 : std_logic;
 
 begin
 
@@ -127,10 +125,7 @@ begin
 	NEW_FRAME_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (RESET = '1') then
-				new_frame      <= '0';
-				new_frame_lock <= '0';
-			elsif (LINK_OK_IN = '0' or MAC_RX_EOF_IN = '1') then
+			if (LINK_OK_IN = '0' or MAC_RX_EOF_IN = '1') then
 				new_frame      <= '0';
 				new_frame_lock <= '0';
 			elsif (new_frame_lock = '0') and (MAC_RX_EN_IN = '1') then
@@ -145,14 +140,14 @@ begin
 
 	FILTER_MACHINE_PROC : process(RX_MAC_CLK, RESET)
 	begin
-		if (RESET = '1') then
+		if RESET = '1' then
 			filter_current_state <= IDLE;
 		elsif rising_edge(RX_MAC_CLK) then
 			filter_current_state <= filter_next_state;
 		end if;
 	end process FILTER_MACHINE_PROC;
 
-	FILTER_MACHINE : process(filter_current_state, saved_frame_type, LINK_OK_IN, saved_proto, MY_MAC_IN, saved_dest_mac, remove_ctr, new_frame, MAC_RX_EOF_IN, frame_type_valid, ALLOW_RX_IN, FR_REDIRECT_TRAFFIC_IN, saved_fo_ip)
+	FILTER_MACHINE : process(filter_current_state, saved_frame_type, LINK_OK_IN, saved_proto, MY_MAC_IN, saved_dest_mac, remove_ctr, new_frame, MAC_RX_EOF_IN, frame_type_valid, ALLOW_RX_IN)
 	begin
 		case filter_current_state is
 			when IDLE =>
@@ -191,8 +186,7 @@ begin
 					if (saved_frame_type = x"8100") then -- VLAN tagged frame
 						filter_next_state <= REMOVE_VID;
 					else                -- no VLAN tag
-						-- in case the redirection is on, treat all the frames as ip and tcp
-						if (saved_frame_type = x"0800") or (FR_REDIRECT_TRAFFIC_IN = '1') then -- in case of IP continue removing headers
+						if (saved_frame_type = x"0800") then -- in case of IP continue removing headers
 							filter_next_state <= REMOVE_IP;
 						else
 							filter_next_state <= DECIDE;
@@ -225,17 +219,10 @@ begin
 			when REMOVE_IP =>
 				state <= x"c";
 				if (remove_ctr = x"11") then
-					-- in case the redirection is on, treat all the frames as ip and tcp
-					if (saved_proto = x"11") and (FR_REDIRECT_TRAFFIC_IN = '0') then -- in case of udp
-						if (saved_fo_ip(11 downto 0) = x"000") then -- first frame
-							filter_next_state <= REMOVE_UDP;
-						else            -- following fragments
-							filter_next_state <= DECIDE;
-						end if;
-					elsif (saved_proto = x"06") or (FR_REDIRECT_TRAFFIC_IN = '1') then -- in case of tcp
-						filter_next_state <= REMOVE_TCP;
+					if (saved_proto = x"11") then -- forced to recognize udp only, TODO check all protocols
+						filter_next_state <= REMOVE_UDP;
 					else
-						filter_next_state <= DECIDE;
+						filter_next_state <= DECIDE; -- changed from drop
 					end if;
 				else
 					filter_next_state <= REMOVE_IP;
@@ -249,18 +236,11 @@ begin
 					filter_next_state <= REMOVE_UDP;
 				end if;
 
-			--	port numbers are at the same position as in UDP, remove only them, the rest pass to protocol implementation
-			when REMOVE_TCP =>
-				state <= x"e";
-				if (remove_ctr = x"15") then
-					filter_next_state <= DECIDE;
-				else
-					filter_next_state <= REMOVE_TCP;
-				end if;
-
 			when DECIDE =>
 				state <= x"6";
 				if (frame_type_valid = '1') then
+					filter_next_state <= SAVE_FRAME;
+				elsif (saved_frame_type = x"0806") then
 					filter_next_state <= SAVE_FRAME;
 				else
 					filter_next_state <= DROP_FRAME;
@@ -293,13 +273,9 @@ begin
 	REMOVE_CTR_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = IDLE) then
+			if (filter_current_state = IDLE) or (filter_current_state = REMOVE_VTYPE and remove_ctr = x"0f") or (filter_current_state = REMOVE_TYPE and remove_ctr = x"0b") then
 				remove_ctr <= (others => '1');
-			elsif (filter_current_state = REMOVE_VTYPE and remove_ctr = x"0f") then
-				remove_ctr <= (others => '1');
-			elsif (filter_current_state = REMOVE_TYPE and remove_ctr = x"0b") then
-				remove_ctr <= (others => '1');
-			elsif (MAC_RX_EN_IN = '1') and (filter_current_state /= IDLE) then
+			elsif (MAC_RX_EN_IN = '1') and (filter_current_state /= IDLE) then --and (filter_current_state /= CLEANUP) then
 				remove_ctr <= remove_ctr + x"1";
 			else
 				remove_ctr <= remove_ctr;
@@ -307,60 +283,13 @@ begin
 		end if;
 	end process REMOVE_CTR_PROC;
 
-	PREVIOUS_ID_PROC : process(CLK)
-	begin
-		if rising_edge(CLK) then
-			if (filter_current_state = CLEANUP) then
-				previous_id       <= saved_id_ip;
-				prev_udp_dst_port <= saved_dest_udp;
-				prev_udp_src_port <= saved_src_udp;
-			else
-				previous_id       <= previous_id;
-				prev_udp_dst_port <= prev_udp_dst_port;
-				prev_udp_src_port <= prev_udp_src_port;
-			end if;
-		end if;
-	end process PREVIOUS_ID_PROC;
-
-	SAVED_ID_PROC : process(RX_MAC_CLK)
-	begin
-		if rising_edge(RX_MAC_CLK) then
-			if (RESET = '1') or (filter_current_state = CLEANUP) then
-				saved_id_ip <= (others => '0');
-			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"03") then
-				saved_id_ip(7 downto 0) <= MAC_RXD_IN;
-			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"02") then
-				saved_id_ip(15 downto 8) <= MAC_RXD_IN;
-			else
-				saved_id_ip <= saved_id_ip;
-			end if;
-		end if;
-	end process SAVED_ID_PROC;
-
-	SAVED_FO_PROC : process(RX_MAC_CLK)
-	begin
-		if rising_edge(RX_MAC_CLK) then
-			if (RESET = '1') or (filter_current_state = CLEANUP) then
-				saved_fo_ip <= (others => '0');
-			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"05") then
-				saved_fo_ip(7 downto 0) <= MAC_RXD_IN;
-			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"04") then
-				saved_fo_ip(15 downto 8) <= MAC_RXD_IN;
-			else
-				saved_fo_ip <= saved_fo_ip;
-			end if;
-		end if;
-	end process SAVED_FO_PROC;
-
 	SAVED_PROTO_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			if (RESET = '1') or (filter_current_state = CLEANUP) then
+			if (filter_current_state = CLEANUP) then
 				saved_proto <= (others => '0');
-			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"07") and (FR_REDIRECT_TRAFFIC_IN = '0') then
+			elsif (filter_current_state = REMOVE_IP) and (remove_ctr = x"07") then
 				saved_proto <= MAC_RXD_IN;
-			elsif (FR_REDIRECT_TRAFFIC_IN = '1') then
-				saved_proto <= x"06";
 			else
 				saved_proto <= saved_proto;
 			end if;
@@ -410,16 +339,10 @@ begin
 		if rising_edge(RX_MAC_CLK) then
 			if (filter_current_state = CLEANUP) then
 				saved_src_udp <= (others => '0');
-			elsif (filter_current_state = REMOVE_UDP or filter_current_state = REMOVE_TCP) and (remove_ctr = x"12") then
+			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"12") then
 				saved_src_udp(15 downto 8) <= MAC_RXD_IN;
-			elsif (filter_current_state = REMOVE_UDP or filter_current_state = REMOVE_TCP) and (remove_ctr = x"13") then
+			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"13") then
 				saved_src_udp(7 downto 0) <= MAC_RXD_IN;
-			elsif (filter_current_state = REMOVE_IP and remove_ctr = x"08" and saved_proto = x"11") then -- in case of ip/udp
-				if (saved_fo_ip(11 downto 0) /= x"000" and saved_id_ip = previous_id) then -- in case of following fragments use previous udp dest port
-					saved_src_udp <= prev_udp_src_port;
-				else
-					saved_src_udp <= x"0000"; -- drop otherwise
-				end if;
 			else
 				saved_src_udp <= saved_src_udp;
 			end if;
@@ -431,38 +354,15 @@ begin
 		if rising_edge(RX_MAC_CLK) then
 			if (filter_current_state = CLEANUP) then
 				saved_dest_udp <= (others => '0');
-			elsif (filter_current_state = REMOVE_UDP or filter_current_state = REMOVE_TCP) and (remove_ctr = x"14") then
+			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"14") then
 				saved_dest_udp(15 downto 8) <= MAC_RXD_IN;
-			elsif (filter_current_state = REMOVE_UDP or filter_current_state = REMOVE_TCP) and (remove_ctr = x"15") then
+			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"15") then
 				saved_dest_udp(7 downto 0) <= MAC_RXD_IN;
-			elsif (filter_current_state = REMOVE_IP and remove_ctr = x"08" and saved_proto = x"11") then -- in case of ip/udp
-				if (saved_fo_ip(11 downto 0) /= x"000" and saved_id_ip = previous_id) then -- in case of following fragments use previous udp dest port
-					saved_dest_udp <= prev_udp_dst_port;
-				else
-					saved_dest_udp <= x"0000"; -- drop otherwise
-				end if;
 			else
 				saved_dest_udp <= saved_dest_udp;
 			end if;
 		end if;
 	end process SAVED_DEST_UDP_PROC;
-
-	SAVED_UDP_CHECKSUM_PROC : process(RX_MAC_CLK)
-	begin
-		if rising_edge(RX_MAC_CLK) then
-			if (filter_current_state = CLEANUP) then
-				saved_checksum <= (others => '0');
-			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"18") then
-				saved_checksum(15 downto 8) <= MAC_RXD_IN;
-				saved_checksum(7 downto 0)  <= x"00";
-			elsif (filter_current_state = REMOVE_UDP) and (remove_ctr = x"19") then
-				saved_checksum(7 downto 0)  <= MAC_RXD_IN;
-				saved_checksum(15 downto 8) <= saved_checksum(15 downto 8);
-			else
-				saved_checksum <= saved_checksum;
-			end if;
-		end if;
-	end process SAVED_UDP_CHECKSUM_PROC;
 
 	-- saves the destination mac address of the incoming frame
 	SAVED_DEST_MAC_PROC : process(RX_MAC_CLK)
@@ -551,8 +451,11 @@ begin
 
 	type_validator : entity work.trb_net16_gbe_type_validator
 		generic map(
-			SIMULATE      => SIMULATE,
-			INCLUDE_DEBUG => INCLUDE_DEBUG
+			SIMULATE              => SIMULATE,
+			INCLUDE_DEBUG         => INCLUDE_DEBUG,
+			LATTICE_ECP3          => LATTICE_ECP3,
+			XILINX_SERIES7_ISE    => XILINX_SERIES7_ISE,
+			XILINX_SERIES7_VIVADO => XILINX_SERIES7_VIVADO
 		)
 		port map(
 			CLK                      => RX_MAC_CLK,
@@ -571,9 +474,10 @@ begin
 			ALLOWED_UDP_PROTOCOLS_IN => FR_ALLOWED_UDP_IN,
 
 			-- TCP level
-			TCP_PROTOCOL_IN          => saved_dest_udp,
-			ALLOWED_TCP_PROTOCOLS_IN => FR_ALLOWED_TCP_IN,
-			VALID_OUT                => frame_type_valid
+			TCP_PROTOCOL_IN          => (others => '0'),
+			ALLOWED_TCP_PROTOCOLS_IN => (others => '0'),
+			VALID_OUT                => frame_type_valid,
+			DEBUG_OUT                => open
 		);
 
 	receive_fifo : entity work.fifo_4096x9_generic_wrapper
@@ -600,8 +504,8 @@ begin
 	RX_FIFO_SYNC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
-			rec_d(8)          <= MAC_RX_EOF_IN;
-			rec_d(7 downto 0) <= MAC_RXD_IN;
+			rx_data(8)          <= MAC_RX_EOF_IN;
+			rx_data(7 downto 0) <= MAC_RXD_IN;
 
 			if (MAC_RX_EN_IN = '1') then
 				if (filter_current_state = SAVE_FRAME) then
@@ -620,63 +524,6 @@ begin
 			MAC_RX_FIFO_FULL_OUT <= rec_fifo_full;
 		end if;
 	end process RX_FIFO_SYNC;
-
-	FIFO_RD_EN_PROC : process(ip_o, read_bytes_ctr, FR_RD_EN_IN)
-	begin
-		if (FR_RD_EN_IN = '1') then
-			if (ip_o(71 downto 64) = x"06" and read_bytes_ctr > 37) then
-				fifo_rd_en <= '1';
-			elsif (ip_o(71 downto 64) /= x"06") then
-				fifo_rd_en <= '1';
-			else
-				fifo_rd_en <= '0';
-			end if;
-		else
-			fifo_rd_en <= '0';
-		end if;
-	end process FIFO_RD_EN_PROC;
-
-	FR_Q_OUT_PROC : process(ip_o, read_bytes_ctr, sizes_o, tcp_q, rec_o)
-	begin
-		-- in case its TCP load headers first
-		if (ip_o(71 downto 64) = x"06") then
-			if (read_bytes_ctr < 39) then
-				FR_Q_OUT(7 downto 0) <= tcp_q;
-			else
-				FR_Q_OUT(7 downto 0) <= rec_o(7 downto 0);
-			end if;
-
-			if (std_logic_vector(read_bytes_ctr) = sizes_o(15 downto 0) + x"27" and sizes_o(15 downto 0) /= x"0000") then
-				FR_Q_OUT(8) <= '1';
-			else
-				FR_Q_OUT(8) <= '0';
-			end if;
-		-- otherwise proceed in a normal way
-		else
-			FR_Q_OUT(7 downto 0) <= rec_o(7 downto 0);
-			FR_Q_OUT(8) <= rec_o(8);
---			if (std_logic_vector(read_bytes_ctr) = sizes_o(15 downto 0) and sizes_o(15 downto 0) /= x"0000") then
---				FR_Q_OUT(8) <= '1';
---			else
---				FR_Q_OUT(8) <= '0';
---			end if;
-		end if;
-	end process FR_Q_OUT_PROC;
-
-	READ_BYTES_CTR_PROC : process(CLK)
-	begin
-		if rising_edge(CLK) then
-			if (RESET = '1') or (FR_GET_FRAME_IN = '1') then
-				read_bytes_ctr <= (others => '0');
-			elsif (std_logic_vector(read_bytes_ctr) = sizes_o(15 downto 0) + x"27" and ip_o(71 downto 64) = x"06") then
-				read_bytes_ctr <= (others => '0');
-			elsif (std_logic_vector(read_bytes_ctr) = sizes_o(15 downto 0) and ip_o(71 downto 64) /= x"06") then
-				read_bytes_ctr <= (others => '0');
-			elsif (FR_RD_EN_IN = '1') then
-				read_bytes_ctr <= read_bytes_ctr + 1;
-			end if;
-		end if;
-	end process READ_BYTES_CTR_PROC;
 
 	sizes_d(15 downto 0)  <= rx_bytes_ctr;
 	sizes_d(31 downto 16) <= saved_frame_type;
@@ -791,58 +638,21 @@ begin
 	FR_DEST_IP_ADDRESS_OUT <= ip_o(63 downto 32);
 	FR_IP_PROTOCOL_OUT     <= ip_o(71 downto 64);
 
-	ip_h_d(15 downto 0)  <= saved_id_ip;
-	ip_h_d(31 downto 16) <= saved_fo_ip;
-	ip_h_fifo : entity work.fifo_512x32_generic_wrapper
-		generic map(
-			SIMULATE              => SIMULATE,
-			INCLUDE_DEBUG         => INCLUDE_DEBUG,
-			LATTICE_ECP3          => LATTICE_ECP3,
-			XILINX_SERIES7_ISE    => XILINX_SERIES7_ISE,
-			XILINX_SERIES7_VIVADO => XILINX_SERIES7_VIVADO
-		)
-		port map(
-			WR_CLK_IN => RX_MAC_CLK,
-			RD_CLK_IN => CLK,
-			RESET_IN  => RESET,
-			DATA_IN   => ip_h_d,
-			WR_EN_IN  => frame_valid_q,
-			DATA_OUT  => ip_h_o,
-			RD_EN_IN  => FR_GET_FRAME_IN,
-			FULL_OUT  => sizes_fifo_full,
-			EMPTY_OUT => sizes_fifo_empty,
-			DEBUG_OUT => open
-		);
-	FR_ID_IP_OUT <= ip_h_o(15 downto 0);
-	FR_FO_IP_OUT <= ip_h_o(31 downto 16);
-
-	tcp_header_fifo : entity work.fifo_1024x8_generic_wrapper
-		generic map(
-			SIMULATE              => SIMULATE,
-			INCLUDE_DEBUG         => INCLUDE_DEBUG,
-			LATTICE_ECP3          => LATTICE_ECP3,
-			XILINX_SERIES7_ISE    => XILINX_SERIES7_ISE,
-			XILINX_SERIES7_VIVADO => XILINX_SERIES7_VIVADO
-		)
-		port map(
-			WR_CLK_IN => RX_MAC_CLK,
-			RD_CLK_IN => CLK,
-			RESET_IN  => tcp_reset,
-			DATA_IN   => MAC_RXD_IN,
-			WR_EN_IN  => tcp_wr_en,
-			DATA_OUT  => tcp_q,
-			RD_EN_IN  => tcp_rd_en,
-			FULL_OUT  => open,
-			EMPTY_OUT => open,
-			DEBUG_OUT => open
-		);
-
-	tcp_wr_en <= '1' when (MAC_RX_EN_IN = '1') and ((filter_current_state = REMOVE_DEST or filter_current_state = REMOVE_SRC or filter_current_state = REMOVE_TYPE or filter_current_state = REMOVE_IP or filter_current_state = REMOVE_TCP) or ((filter_current_state = IDLE) and (new_frame = '1')
-				and (ALLOW_RX_IN = '1')) or ((filter_current_state = IDLE) and (MAC_RX_EN_IN = '1') and (new_frame = '0')))
-		else '0';
-	tcp_rd_en <= '1' when (FR_RD_EN_IN = '1' and read_bytes_ctr < 39) else '0';
-	tcp_reset <= '1' when (RESET = '1') or (filter_current_state = DECIDE and saved_proto /= x"06") or (ip_o(71 downto 64) = x"06" and fifo_rd_en = '1')
-		else '0';
+	process(CLK)
+	begin
+		if rising_edge(CLK) then
+			FR_SRC_IP_ADDRESS_OUT   <= fr_src_ip;
+			FR_DEST_IP_ADDRESS_OUT  <= fr_dest_ip;
+			FR_IP_PROTOCOL_OUT      <= fr_ip_proto;
+			FR_DEST_UDP_PORT_OUT    <= fr_dest_udp;
+			FR_DEST_MAC_ADDRESS_OUT <= fr_dest_mac;
+			FR_SRC_MAC_ADDRESS_OUT  <= fr_src_mac;
+			FR_SRC_UDP_PORT_OUT     <= fr_src_udp;
+			FR_FRAME_PROTO_OUT      <= fr_frame_proto;
+			FR_FRAME_SIZE_OUT       <= fr_frame_size;
+			FR_Q_OUT                <= fr_q;
+		end if;
+	end process;
 
 	FRAME_VALID_PROC : process(RX_MAC_CLK)
 	begin
@@ -866,6 +676,17 @@ begin
 		end if;
 	end process;
 
+	ERROR_FRAMES_CTR_PROC : process(RX_MAC_CLK)
+	begin
+		if rising_edge(RX_MAC_CLK) then
+			if (RESET = '1') then
+				error_frames_ctr <= (others => '0');
+			elsif (MAC_RX_ER_IN = '1') then
+				error_frames_ctr <= error_frames_ctr + x"1";
+			end if;
+		end if;
+	end process ERROR_FRAMES_CTR_PROC;
+
 	SYNC_PROC : process(RX_MAC_CLK)
 	begin
 		if rising_edge(RX_MAC_CLK) then
@@ -874,6 +695,7 @@ begin
 		end if;
 	end process SYNC_PROC;
 
+	--*****************
 	-- synchronization between 125MHz receive clock and 100MHz system clock
 	FRAME_VALID_SYNC : entity work.pulse_sync
 		port map(
@@ -885,4 +707,6 @@ begin
 			PULSE_B_OUT => FR_FRAME_VALID_OUT
 		);
 
-end trb_net16_gbe_frame_receiver; 
+end trb_net16_gbe_frame_receiver;
+
+

@@ -12,8 +12,12 @@ use work.trb_net_gbe_protocols.all;
 
 entity trb_net16_gbe_type_validator is
 	generic(
-		SIMULATE      : integer range 0 to 1 := 0;
-		INCLUDE_DEBUG : integer range 0 to 1 := 0
+		SIMULATE              : integer range 0 to 1 := 0;
+		INCLUDE_DEBUG         : integer range 0 to 1 := 0;
+
+		LATTICE_ECP3          : integer range 0 to 1 := 0;
+		XILINX_SERIES7_ISE    : integer range 0 to 1 := 0;
+		XILINX_SERIES7_VIVADO : integer range 0 to 1 := 0
 	);
 	port(
 		CLK                      : in  std_logic; -- 125MHz clock input
@@ -36,15 +40,13 @@ entity trb_net16_gbe_type_validator is
 		TCP_PROTOCOL_IN          : in  std_logic_vector(15 downto 0);
 		ALLOWED_TCP_PROTOCOLS_IN : in  std_logic_vector(31 downto 0);
 
-		VALID_OUT                : out std_logic
+		VALID_OUT                : out std_logic;
+
+		DEBUG_OUT                : std_logic_vector(255 downto 0)
 	);
 end trb_net16_gbe_type_validator;
 
 architecture trb_net16_gbe_type_validator of trb_net16_gbe_type_validator is
-
-	--attribute HGROUP : string;
-	--attribute HGROUP of trb_net16_gbe_type_validator : architecture is "GBE_MAIN_group";
-
 	signal result          : std_logic_vector(c_MAX_FRAME_TYPES - 1 downto 0);
 	signal ip_result       : std_logic_vector(c_MAX_IP_PROTOCOLS - 1 downto 0);
 	signal udp_result      : std_logic_vector(c_MAX_UDP_PROTOCOLS - 1 downto 0);
