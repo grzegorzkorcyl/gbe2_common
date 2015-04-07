@@ -5,9 +5,19 @@ use IEEE.NUMERIC_STD.ALL;
 use work.trb_net_gbe_components.all;
 
 entity frame_tx is
+	generic(
+		SIMULATE              : integer range 0 to 1 := 0;
+		INCLUDE_DEBUG         : integer range 0 to 1 := 0;
+
+		LATTICE_ECP3          : integer range 0 to 1 := 0;
+		XILINX_SERIES7_ISE    : integer range 0 to 1 := 0;
+		XILINX_SERIES7_VIVADO : integer range 0 to 1 := 0
+	);
 	port(
 		MAIN_CTRL_CLK          : in  std_logic; -- gk 15/10/2012
 		RESET                  : in  std_logic;
+
+		TC_MAX_FRAME_IN        : in  std_logic_vector(15 downto 0);
 
 		-- part to connect to frame rec main controller module
 		MC_TRANSMIT_CTRL_IN    : in  std_logic; -- slow control frame is waiting to be built and sent
@@ -90,8 +100,14 @@ architecture Behavioral of frame_tx is
 	attribute keep of dest_mac : signal is "true";
 
 begin
-
 	TRANSMIT_CONTROLLER : entity work.trb_net16_gbe_transmit_control2
+		generic map(
+			SIMULATE              => SIMULATE,
+			INCLUDE_DEBUG         => INCLUDE_DEBUG,
+			LATTICE_ECP3          => LATTICE_ECP3,
+			XILINX_SERIES7_ISE    => XILINX_SERIES7_ISE,
+			XILINX_SERIES7_VIVADO => XILINX_SERIES7_VIVADO
+		)
 		port map(
 			CLK                      => MAIN_CTRL_CLK,
 			RESET                    => RESET,
@@ -112,6 +128,7 @@ begin
 			TC_TRANSMISSION_DONE_OUT => MC_TRANSMIT_DONE_OUT,
 			TC_IDENT_IN              => MC_IDENT_IN,
 			TC_CHECKSUM_IN           => MC_CHECKSUM_IN,
+			TC_MAX_FRAME_IN          => TC_MAX_FRAME_IN,
 
 			-- signal to/from frame constructor
 			FC_DATA_OUT              => tc_data,
@@ -211,6 +228,13 @@ begin
 
 	-- ENTITY THAT TAKES PREPARED DATA AND CONSTRUCTS ETHERNET FRAMES
 	FRAME_CONSTR : entity work.trb_net16_gbe_frame_constr
+		generic map(
+			SIMULATE              => SIMULATE,
+			INCLUDE_DEBUG         => INCLUDE_DEBUG,
+			LATTICE_ECP3          => LATTICE_ECP3,
+			XILINX_SERIES7_ISE    => XILINX_SERIES7_ISE,
+			XILINX_SERIES7_VIVADO => XILINX_SERIES7_VIVADO
+		)
 		port map(
 			-- ports for user logic
 			RESET                   => RESET,
@@ -250,9 +274,7 @@ begin
 			FT_TX_DONE_IN           => tx_done, --EMAC0CLIENTTXSTATSVLD,
 			FT_TX_DISCFRM_IN        => '0',
 			-- debug ports
-			BSM_CONSTR_OUT          => open,
-			BSM_TRANS_OUT           => open,
-			DEBUG_OUT               => ft_debug
+			DEBUG_OUT               => open
 		);
 
 	TX_DONE_PROC : process(TX_CLIENT_CLK_0)
