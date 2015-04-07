@@ -172,7 +172,7 @@ begin
 			     CLIENTEMAC0TXFIRSTBYTE => open,
 			     CLIENTEMAC0TXUNDERRUN  => open,
 			     TX_CLIENT_CLK_0        => rx_clk,
-			     EMAC0CLIENTTXACK       => '1',
+			     EMAC0CLIENTTXACK       => '0',
 			     EMAC0CLIENTTXSTATSVLD  => '1',
 			     DEBUG_OUT              => open);
 
