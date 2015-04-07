@@ -45,6 +45,7 @@ architecture Behavioral of rx_main_tx_testbench is
 	signal tc_ident                   : std_logic_vector(15 downto 0);
 	signal tc_checksum                : std_logic_vector(15 downto 0);
 	signal tc_transmit_done           : std_logic;
+	signal tx_done                    : std_logic;
 
 begin
 	frame_rx_i : entity work.frame_rx
@@ -173,7 +174,7 @@ begin
 			     CLIENTEMAC0TXUNDERRUN  => open,
 			     TX_CLIENT_CLK_0        => rx_clk,
 			     EMAC0CLIENTTXACK       => '0',
-			     EMAC0CLIENTTXSTATSVLD  => '1',
+			     EMAC0CLIENTTXSTATSVLD  => tx_done,
 			     DEBUG_OUT              => open);
 
 	process
@@ -198,6 +199,7 @@ begin
 		client_rx_dv1      <= '0';
 		client_rxd1        <= x"00";
 		client_good_frame1 <= '0';
+		tx_done <= '0';
 		wait for 100 ns;
 		reset <= '0';
 		wait for 100 ns;
@@ -334,6 +336,15 @@ begin
 		wait until rising_edge(rx_clk);
 		client_rx_dv1      <= '0';
 		client_good_frame1 <= '0';
+		
+		wait until rising_edge(rx_clk);
+		wait until rising_edge(rx_clk);
+		wait until rising_edge(rx_clk);
+		wait until rising_edge(rx_clk);
+		wait until rising_edge(rx_clk);
+		tx_done <= '1';
+		wait until rising_edge(rx_clk);
+		tx_done <= '0';
 
 		--		wait until rising_edge(rx_clk);
 		--		client_rx_dv1 <= '1';

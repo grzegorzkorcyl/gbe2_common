@@ -271,7 +271,7 @@ begin
 			FT_TX_EMPTY_OUT         => open, --fifo_empty,
 			FT_TX_RD_EN_IN          => fifo_rd_en,
 			FT_START_OF_PACKET_OUT  => fc_sop,
-			FT_TX_DONE_IN           => tx_done, --EMAC0CLIENTTXSTATSVLD,
+			FT_TX_DONE_IN           => tx_done,
 			FT_TX_DISCFRM_IN        => '0',
 			-- debug ports
 			DEBUG_OUT               => open
