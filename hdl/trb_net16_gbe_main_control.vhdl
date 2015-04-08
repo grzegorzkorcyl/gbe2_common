@@ -127,7 +127,7 @@ architecture trb_net16_gbe_main_control of trb_net16_gbe_main_control is
 
 	signal dhcp_start : std_logic;
 	signal dhcp_done  : std_logic;
-	signal wait_ctr   : std_logic_vector(31 downto 0);
+	signal wait_ctr   : std_logic_vector(31 downto 0) := x"0000_0000";
 
 	signal rc_data_local : std_logic_vector(8 downto 0);
 
