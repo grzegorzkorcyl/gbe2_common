@@ -128,7 +128,7 @@ begin
 			port map(
 				--system signals
 				Reset              => RESET_IN,
-				Clk_125M           => GBE_TX_CLK,
+				Clk_125M           => GBE_RX_CLK,
 				Clk_user           => GBE_CLK_DV,
 				Clk_reg            => GBE_CLK_DV,
 				Speed              => open,
