@@ -22,7 +22,7 @@ entity gbe_gmii_wrapper is
 		RESET_IN       : in  std_logic;
 		GBE_CLK_DV     : in  std_logic;
 		GBE_RX_CLK     : in  std_logic;
-		GBE_TX_CLK     : in  std_logic;
+		GBE_TX_CLK     : out std_logic;
 
 		RX_DATA_IN     : in  std_logic_vector(7 downto 0);
 		RX_DATA_DV_IN  : in  std_logic;
@@ -43,6 +43,7 @@ architecture Behavioral of gbe_gmii_wrapper is
 	signal mac_rx_data, mac_tx_data                                : std_logic_vector(31 downto 0);
 	signal mac_rx_be, mac_tx_be                                    : std_logic_vector(1 downto 0);
 	signal mac_tx_sop, mac_tx_eop, mac_tx_wr, mac_tx_wa            : std_logic;
+	signal tx_clk                                                  : std_logic;
 
 begin
 	gbe_i : entity work.gbe_module_wrapper
@@ -56,8 +57,8 @@ begin
 		port map(
 			SYS_CLK         => SYS_CLK,
 			RESET_IN        => RESET_IN,
-			GBE_RX_CLK      => GBE_RX_CLK,
-			GBE_TX_CLK      => GBE_TX_CLK,
+			GBE_RX_CLK      => tx_clk,
+			GBE_TX_CLK      => tx_clk,
 			RX_DATA_IN      => rx_data,
 			RX_DATA_DV_IN   => rx_dv,
 			RX_DATA_GF_IN   => rx_gf,
@@ -81,7 +82,7 @@ begin
 			)
 			port map(
 				MAC_CLK_IN               => GBE_CLK_DV,
-				GBE_CLK_IN               => GBE_TX_CLK,
+				GBE_CLK_IN               => tx_clk,
 				RESET_IN                 => RESET_IN,
 				MAC_TX_WA_IN             => mac_tx_wa,
 				MAC_TX_WR_OUT            => mac_tx_wr,
@@ -107,7 +108,7 @@ begin
 			)
 			port map(
 				MAC_CLK_IN      => GBE_CLK_DV,
-				GBE_CLK_IN      => GBE_RX_CLK,
+				GBE_CLK_IN      => tx_clk,
 				RESET_IN        => RESET_IN,
 				MAC_RX_RA_IN    => mac_rx_ra,
 				MAC_RX_RD_OUT   => mac_rx_rd,
@@ -151,7 +152,7 @@ begin
 				Pkg_lgth_fifo_ra   => open,
 				Pkg_lgth_fifo_data => open,
 				--Phy interface         
-				Gtx_clk            => GBE_TX_CLK,
+				Gtx_clk            => tx_clk,
 				Rx_clk             => GBE_RX_CLK,
 				Tx_clk             => '0',
 				Tx_er              => TX_DATA_ER_OUT,
@@ -174,6 +175,8 @@ begin
 				Mdi                => '0',
 				Mdc                => open
 			);
+
+		GBE_TX_CLK <= tx_clk;
 
 	end generate OPENCORES_MAC_GEN;
 
