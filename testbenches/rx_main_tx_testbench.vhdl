@@ -150,32 +150,34 @@ begin
 			XILINX_SERIES7_ISE    => 1,
 			XILINX_SERIES7_VIVADO => 0
 		)
-		port map(MAIN_CTRL_CLK          => sys_clk,
-			     RESET                  => RESET,
-			     TC_MAX_FRAME_IN        => x"0578",
-			     MC_TRANSMIT_CTRL_IN    => tc_transmit_ctrl,
-			     MC_DATA_IN             => tc_data,
-			     MC_RD_EN_OUT           => tc_rd_en,
-			     MC_FRAME_SIZE_IN       => tc_frame_size,
-			     MC_FRAME_TYPE_IN       => tc_frame_type,
-			     MC_DEST_MAC_IN         => tc_dest_mac,
-			     MC_DEST_IP_IN          => tc_dest_ip,
-			     MC_DEST_UDP_IN         => tc_dest_udp,
-			     MC_SRC_MAC_IN          => tc_src_mac,
-			     MC_SRC_IP_IN           => tc_src_ip,
-			     MC_SRC_UDP_IN          => tc_src_udp,
-			     MC_IP_PROTOCOL_IN      => tc_ip_proto,
-			     MC_IDENT_IN            => tc_ident,
-			     MC_CHECKSUM_IN         => tc_checksum,
-			     MC_TRANSMIT_DONE_OUT   => tc_transmit_done,
-			     CLIENTEMAC0TXD         => open,
-			     CLIENTEMAC0TXDVLD      => open,
-			     CLIENTEMAC0TXFIRSTBYTE => open,
-			     CLIENTEMAC0TXUNDERRUN  => open,
-			     TX_CLIENT_CLK_0        => rx_clk,
-			     EMAC0CLIENTTXACK       => '0',
-			     EMAC0CLIENTTXSTATSVLD  => tx_done,
-			     DEBUG_OUT              => open);
+		port map(
+			MAIN_CTRL_CLK          => sys_clk,
+			RESET                  => RESET,
+			TC_MAX_FRAME_IN        => x"0578",
+			MC_TRANSMIT_CTRL_IN    => tc_transmit_ctrl,
+			MC_DATA_IN             => tc_data,
+			MC_RD_EN_OUT           => tc_rd_en,
+			MC_FRAME_SIZE_IN       => tc_frame_size,
+			MC_FRAME_TYPE_IN       => tc_frame_type,
+			MC_DEST_MAC_IN         => tc_dest_mac,
+			MC_DEST_IP_IN          => tc_dest_ip,
+			MC_DEST_UDP_IN         => tc_dest_udp,
+			MC_SRC_MAC_IN          => tc_src_mac,
+			MC_SRC_IP_IN           => tc_src_ip,
+			MC_SRC_UDP_IN          => tc_src_udp,
+			MC_IP_PROTOCOL_IN      => tc_ip_proto,
+			MC_IDENT_IN            => tc_ident,
+			MC_CHECKSUM_IN         => tc_checksum,
+			MC_TRANSMIT_DONE_OUT   => tc_transmit_done,
+			CLIENTEMAC0TXD         => open,
+			CLIENTEMAC0TXDVLD      => open,
+			CLIENTEMAC0TXFIRSTBYTE => open,
+			CLIENTEMAC0TXUNDERRUN  => open,
+			TX_CLIENT_CLK_0        => rx_clk,
+			EMAC0CLIENTTXACK       => '0',
+			EMAC0CLIENTTXSTATSVLD  => tx_done,
+			DEBUG_OUT              => open
+		);
 
 	process
 	begin
@@ -199,7 +201,7 @@ begin
 		client_rx_dv1      <= '0';
 		client_rxd1        <= x"00";
 		client_good_frame1 <= '0';
-		tx_done <= '0';
+		tx_done            <= '0';
 		wait for 100 ns;
 		reset <= '0';
 		wait for 100 ns;
@@ -336,7 +338,7 @@ begin
 		wait until rising_edge(rx_clk);
 		client_rx_dv1      <= '0';
 		client_good_frame1 <= '0';
-		
+
 		wait until rising_edge(rx_clk);
 		wait until rising_edge(rx_clk);
 		wait until rising_edge(rx_clk);
