@@ -255,24 +255,34 @@ begin
 			DEBUG_OUT               => open
 		);
 
-	TX_DONE_PROC : process(TX_CLIENT_CLK_0)
-	begin
-		if rising_edge(TX_CLIENT_CLK_0) then
-			if (RESET = '1') then
-				tx_done      <= '0';
-				tx_done_flag <= '0';
-			elsif (EMAC0CLIENTTXSTATSVLD = '1' and tx_done_flag = '0') then
-				tx_done      <= '1';
-				tx_done_flag <= '1';
-			elsif (EMAC0CLIENTTXSTATSVLD = '0' and tx_done_flag = '1') then
-				tx_done      <= '0';
-				tx_done_flag <= '0';
-			else
-				tx_done <= '0';
-				tx_done_flag <= tx_done_flag;
-			end if;
-		end if;
-	end process TX_DONE_PROC;
+	tx_done_sync_inst : entity work.edge_to_pulse
+		generic map(SIMULATE      => SIMULATE,
+			        INCLUDE_DEBUG => INCLUDE_DEBUG
+		)
+		port map(CLK       => TX_CLIENT_CLK_0,
+			     SIGNAL_IN => EMAC0CLIENTTXSTATSVLD,
+			     PULSE_OUT => tx_done,
+			     DEBUG_OUT => open
+		);
+
+--	TX_DONE_PROC : process(TX_CLIENT_CLK_0)
+--	begin
+--		if rising_edge(TX_CLIENT_CLK_0) then
+--			if (RESET = '1') then
+--				tx_done      <= '0';
+--				tx_done_flag <= '0';
+--			elsif (EMAC0CLIENTTXSTATSVLD = '1' and tx_done_flag = '0') then
+--				tx_done      <= '1';
+--				tx_done_flag <= '1';
+--			elsif (EMAC0CLIENTTXSTATSVLD = '0' and tx_done_flag = '1') then
+--				tx_done      <= '0';
+--				tx_done_flag <= '0';
+--			else
+--				tx_done      <= '0';
+--				tx_done_flag <= tx_done_flag;
+--			end if;
+--		end if;
+--	end process TX_DONE_PROC;
 
 	FC_EOP_Q_PROC : process(TX_CLIENT_CLK_0)
 	begin

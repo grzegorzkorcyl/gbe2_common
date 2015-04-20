@@ -50,7 +50,7 @@ entity trb_net16_gbe_protocol_DHCP is
 		TC_SRC_MAC_OUT         : out std_logic_vector(47 downto 0);
 		TC_SRC_IP_OUT          : out std_logic_vector(31 downto 0);
 		TC_SRC_UDP_OUT         : out std_logic_vector(15 downto 0);
-		
+
 		RECEIVED_FRAMES_OUT    : out std_logic_vector(15 downto 0);
 		SENT_FRAMES_OUT        : out std_logic_vector(15 downto 0);
 		-- END OF INTERFACE
@@ -65,7 +65,6 @@ entity trb_net16_gbe_protocol_DHCP is
 end trb_net16_gbe_protocol_DHCP;
 
 architecture trb_net16_gbe_protocol_DHCP of trb_net16_gbe_protocol_DHCP is
-
 	type main_states is (BOOTING, DELAY, SENDING_DISCOVER, WAITING_FOR_OFFER, SENDING_REQUEST, WAITING_FOR_ACK, ESTABLISHED);
 	signal main_current_state, main_next_state : main_states;
 
@@ -101,7 +100,8 @@ architecture trb_net16_gbe_protocol_DHCP of trb_net16_gbe_protocol_DHCP is
 
 	signal wait_value : std_logic_vector(31 downto 0);
 
-	signal my_ip : std_logic_vector(31 downto 0);
+	signal my_ip       : std_logic_vector(31 downto 0);
+	signal timeout_ctr : std_logic_vector(31 downto 0);
 
 begin
 
@@ -130,10 +130,27 @@ begin
 	vendor_values2(15 downto 0)   <= x"0436"; -- server identifier
 	vendor_values2(47 downto 16)  <= saved_server_ip;
 
+	constants_sim_gen : if SIMULATE = 1 generate
+		timeout_ctr <= x"0000_0500";
+		wait_ctr    <= x"0000_0010";
+	end generate constants_sim_gen;
+	constants_impl_gen : if SIMULATE = 0 generate
+		timeout_ctr <= x"2000_0000";
+		wait_value  <= x"2000_0000";
+	end generate constants_impl_gen;
+
 	--*****************
 	-- setting of global variable for IP address
-	--g_MY_IP <= saved_true_ip when main_current_state = ESTABLISHED else (others => '0'); 
-	my_ip     <= saved_true_ip when main_current_state = ESTABLISHED else (others => '0');
+	process(CLK)
+	begin
+		if rising_edge(CLK) then
+			if (main_current_state = ESTABLISHED) then
+				my_ip <= saved_true_ip;
+			else
+				my_ip <= (others => '0');
+			end if;
+		end if;
+	end process;
 	MY_IP_OUT <= my_ip;
 	--
 	--*****************
@@ -165,9 +182,7 @@ begin
 		end if;
 	end process MAIN_MACHINE_PROC;
 
-	wait_value <= x"2000_0000" when SIMULATE = 0 else x"0000_0010";
-
-	MAIN_MACHINE : process(main_current_state, DHCP_START_IN, construct_current_state, wait_ctr, receive_current_state, PS_DATA_IN, wait_value)
+	MAIN_MACHINE : process(main_current_state, DHCP_START_IN, construct_current_state, wait_ctr, receive_current_state, PS_DATA_IN, wait_value, timeout_ctr)
 	begin
 		case (main_current_state) is
 			when BOOTING =>
@@ -197,7 +212,7 @@ begin
 				state2 <= x"3";
 				if (receive_current_state = SAVE_VALUES) and (PS_DATA_IN(8) = '1') then
 					main_next_state <= SENDING_REQUEST;
-				elsif (wait_ctr = x"2000_0000") then
+				elsif (wait_ctr = timeout_ctr) then
 					main_next_state <= BOOTING;
 				else
 					main_next_state <= WAITING_FOR_OFFER;
@@ -215,7 +230,7 @@ begin
 				state2 <= x"5";
 				if (receive_current_state = SAVE_VALUES) and (PS_DATA_IN(8) = '1') then
 					main_next_state <= ESTABLISHED;
-				elsif (wait_ctr = x"2000_0000") then
+				elsif (wait_ctr = timeout_ctr) then
 					main_next_state <= BOOTING;
 				else
 					main_next_state <= WAITING_FOR_ACK;
