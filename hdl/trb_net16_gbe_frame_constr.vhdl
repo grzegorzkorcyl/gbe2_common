@@ -590,6 +590,8 @@ begin
 			end if;
 		end if;
 	end process sentFramesCtrProc;
+	
+	
 
 	FT_DATA_OUT            <= fpf_q;
 	FT_TX_EMPTY_OUT        <= fpf_empty;

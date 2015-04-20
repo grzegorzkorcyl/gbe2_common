@@ -50,38 +50,23 @@ entity frame_tx is
 end frame_tx;
 
 architecture Behavioral of frame_tx is
-	signal fc_sop, fc_eop, fc_done : std_logic;
+	signal fc_sop, fc_eop : std_logic;
 
 	type constructStates is (IDLE, WAIT_FOR_ACK, TRANSMIT, CLEANUP);
 	signal constr_current_state, constr_next_state : constructStates;
 	signal state                                   : std_logic_vector(3 downto 0);
 
-	signal tc_wr_en                                                           : std_logic;
-	signal tc_data                                                            : std_logic_vector(7 downto 0);
-	signal tc_ip_size                                                         : std_logic_vector(15 downto 0);
-	signal tc_udp_size                                                        : std_logic_vector(15 downto 0);
-	signal tc_ident                                                           : unsigned(15 downto 0);
-	signal tc_flags_offset                                                    : std_logic_vector(15 downto 0);
-	signal tc_sod                                                             : std_logic;
-	signal tc_eod                                                             : std_logic;
-	signal tc_h_ready                                                         : std_logic;
-	signal tc_ready                                                           : std_logic;
-	signal tc_frame_type                                                      : std_logic_vector(15 downto 0);
-	signal fc_dest_mac                                                        : std_logic_vector(47 downto 0);
-	signal fc_dest_ip                                                         : std_logic_vector(31 downto 0);
-	signal fc_dest_udp                                                        : std_logic_vector(15 downto 0);
-	signal fc_src_mac                                                         : std_logic_vector(47 downto 0);
-	signal fc_src_ip                                                          : std_logic_vector(31 downto 0);
-	signal fc_src_udp                                                         : std_logic_vector(15 downto 0);
-	signal fc_type                                                            : std_logic_vector(15 downto 0);
-	signal fc_ihl_version                                                     : std_logic_vector(7 downto 0);
-	signal fc_tos                                                             : std_logic_vector(7 downto 0);
-	signal fc_ttl                                                             : std_logic_vector(7 downto 0);
-	signal fc_protocol                                                        : std_logic_vector(7 downto 0);
-	signal construct, fifo_rd_en, fc_eop_q, first_byte, tx_done, tx_done_flag : std_logic;
-	signal ft_debug, pc_debug                                                 : std_logic_vector(63 downto 0);
-	signal transmission_done                                                  : std_logic;
-	signal saved_bytes_ctr                                                    : unsigned(15 downto 0);
+	signal tc_wr_en                                                : std_logic;
+	signal tc_data                                                 : std_logic_vector(7 downto 0);
+	signal tc_ip_size                                              : std_logic_vector(15 downto 0);
+	signal tc_udp_size                                             : std_logic_vector(15 downto 0);
+	signal tc_flags_offset                                         : std_logic_vector(15 downto 0);
+	signal tc_sod                                                  : std_logic;
+	signal tc_eod                                                  : std_logic;
+	signal tc_h_ready                                              : std_logic;
+	signal tc_ready                                                : std_logic;
+	signal tc_frame_type                                           : std_logic_vector(15 downto 0);
+	signal fifo_rd_en, fc_eop_q, first_byte, tx_done, tx_done_flag : std_logic;
 
 	signal dest_mac                : std_logic_vector(47 downto 0);
 	signal dest_ip                 : std_logic_vector(31 downto 0);
@@ -91,13 +76,6 @@ architecture Behavioral of frame_tx is
 	signal src_udp                 : std_logic_vector(15 downto 0);
 	signal tc_proto                : std_logic_vector(7 downto 0);
 	signal tc_ident_c, tc_checksum : std_logic_vector(15 downto 0);
-
-	signal pc_ready, pc_wr_en, pc_sod, pc_eod, pc_fc_ready, pc_fc_h_ready, pc_transmit_on : std_logic;
-	signal pc_data                                                                        : std_logic_vector(7 downto 0);
-	signal pc_ip_size, pc_udp_size, pc_flags                                              : std_logic_vector(15 downto 0);
-
-	attribute keep : string;
-	attribute keep of dest_mac : signal is "true";
 
 begin
 	TRANSMIT_CONTROLLER : entity work.trb_net16_gbe_transmit_control2
@@ -287,9 +265,11 @@ begin
 				tx_done      <= '1';
 				tx_done_flag <= '1';
 			elsif (EMAC0CLIENTTXSTATSVLD = '0' and tx_done_flag = '1') then
+				tx_done      <= '0';
 				tx_done_flag <= '0';
 			else
 				tx_done <= '0';
+				tx_done_flag <= tx_done_flag;
 			end if;
 		end if;
 	end process TX_DONE_PROC;
