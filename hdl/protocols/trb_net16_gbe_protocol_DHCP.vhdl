@@ -77,7 +77,6 @@ architecture trb_net16_gbe_protocol_DHCP of trb_net16_gbe_protocol_DHCP is
 	signal state       : std_logic_vector(3 downto 0);
 	signal sent_frames : std_logic_vector(15 downto 0);
 
-	signal wait_ctr : std_logic_vector(31 downto 0); -- wait for 5 sec before sending request
 	signal load_ctr : integer range 0 to 600 := 0;
 
 	signal bootp_hdr : std_logic_vector(95 downto 0);
@@ -94,10 +93,10 @@ architecture trb_net16_gbe_protocol_DHCP of trb_net16_gbe_protocol_DHCP is
 	signal your_ip_reg          : std_logic_vector(31 downto 0);
 	signal saved_server_mac     : std_logic_vector(47 downto 0);
 	signal saved_server_ip      : std_logic_vector(31 downto 0);
-	signal state2               : std_logic_vector(3 downto 0);
 	signal state3               : std_logic_vector(3 downto 0);
 	signal vendor_values2       : std_logic_vector(47 downto 0);
 
+	signal wait_ctr : std_logic_vector(31 downto 0) := x"0000_0000";
 	signal wait_value : std_logic_vector(31 downto 0) := x"0000_0000";
 	signal timeout_ctr : std_logic_vector(31 downto 0) := x"0000_0000";
 
@@ -134,6 +133,7 @@ begin
 		timeout_ctr <= x"0000_0500";
 		wait_ctr    <= x"0000_0010";
 	end generate constants_sim_gen;
+	
 	constants_impl_gen : if SIMULATE = 0 generate
 		timeout_ctr <= x"2000_0000";
 		wait_value  <= x"2000_0000";
@@ -186,7 +186,6 @@ begin
 	begin
 		case (main_current_state) is
 			when BOOTING =>
-				state2 <= x"1";
 				if (DHCP_START_IN = '1') then
 					main_next_state <= DELAY;
 				else
@@ -201,7 +200,6 @@ begin
 				end if;
 
 			when SENDING_DISCOVER =>
-				state2 <= x"2";
 				if (construct_current_state = CLEANUP) then
 					main_next_state <= WAITING_FOR_OFFER;
 				else
@@ -209,7 +207,6 @@ begin
 				end if;
 
 			when WAITING_FOR_OFFER =>
-				state2 <= x"3";
 				if (receive_current_state = SAVE_VALUES) and (PS_DATA_IN(8) = '1') then
 					main_next_state <= SENDING_REQUEST;
 				elsif (wait_ctr = timeout_ctr) then
@@ -219,7 +216,6 @@ begin
 				end if;
 
 			when SENDING_REQUEST =>
-				state2 <= x"4";
 				if (construct_current_state = CLEANUP) then
 					main_next_state <= WAITING_FOR_ACK;
 				else
@@ -227,7 +223,6 @@ begin
 				end if;
 
 			when WAITING_FOR_ACK =>
-				state2 <= x"5";
 				if (receive_current_state = SAVE_VALUES) and (PS_DATA_IN(8) = '1') then
 					main_next_state <= ESTABLISHED;
 				elsif (wait_ctr = timeout_ctr) then
@@ -237,12 +232,7 @@ begin
 				end if;
 
 			when ESTABLISHED =>
-				state2          <= x"6";
-				--			if (wait_ctr = x"2000_0000") then
-				--				main_next_state <= SENDING_DISCOVER;
-				--			else
 				main_next_state <= ESTABLISHED;
-		--			end if;
 
 		end case;
 
