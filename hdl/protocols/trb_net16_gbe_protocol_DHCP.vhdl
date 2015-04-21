@@ -598,11 +598,7 @@ begin
 						tc_data(i) <= vendor_values((load_ctr - 236) * 8 + i);
 					end loop;
 					
-					if (load_ctr = 257) then
-						tc_data(8) <= '1';
-					else
-						tc_data(8) <= '0';
-					end if;
+					tc_data(8) <= '0';
 
 				-- needed only for DHCP Request message
 				when VENDOR_VALS2 =>
@@ -610,12 +606,9 @@ begin
 						tc_data(i) <= vendor_values2((load_ctr - 258) * 8 + i);
 					end loop;
 					
-					if (load_ctr = 263) then
-						tc_data(8) <= '1';
-					else
-						tc_data(8) <= '0';
-					end if;
+					tc_data(8) <= '0';
 
+				-- dhcp messages must be terminated with END OPTION 0xff
 				when TERMINATION =>
 					tc_data(7 downto 0) <= x"ff";
 					tc_data(8)          <= '1';
