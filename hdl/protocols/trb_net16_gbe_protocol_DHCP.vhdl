@@ -98,10 +98,10 @@ architecture trb_net16_gbe_protocol_DHCP of trb_net16_gbe_protocol_DHCP is
 	signal state3               : std_logic_vector(3 downto 0);
 	signal vendor_values2       : std_logic_vector(47 downto 0);
 
-	signal wait_value : std_logic_vector(31 downto 0);
+	signal wait_value : std_logic_vector(31 downto 0) := x"0000_0000";
+	signal timeout_ctr : std_logic_vector(31 downto 0) := x"0000_0000";
 
 	signal my_ip       : std_logic_vector(31 downto 0);
-	signal timeout_ctr : std_logic_vector(31 downto 0);
 
 begin
 
