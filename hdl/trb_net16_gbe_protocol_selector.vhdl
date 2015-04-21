@@ -340,7 +340,7 @@ begin
 				end if;
 
 			when PROCESS_REQUEST =>
-				if (busy(index) = '0') then --if (MC_BUSY_IN = '0') then
+				if (busy(index) = '0') then
 					select_next_state <= CLEANUP;
 				else
 					select_next_state <= PROCESS_REQUEST;

@@ -642,7 +642,7 @@ begin
 	end process PS_RESPONSE_SYNC;
 
 	-- fixed sizes for discover and request messages
-	TC_FRAME_SIZE_OUT <= x"0102" when (main_current_state = SENDING_DISCOVER) else x"0108";
+	TC_FRAME_SIZE_OUT <= x"0103" when (main_current_state = SENDING_DISCOVER) else x"0109";
 
 	TC_FRAME_TYPE_OUT <= x"0008"; -- frame type: ip
 
