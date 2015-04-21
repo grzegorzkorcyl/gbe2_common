@@ -97,8 +97,7 @@ architecture trb_net16_gbe_protocol_DHCP of trb_net16_gbe_protocol_DHCP is
 	signal vendor_values2       : std_logic_vector(47 downto 0);
 
 	signal wait_ctr : std_logic_vector(31 downto 0) := x"0000_0000";
-	signal wait_value : std_logic_vector(31 downto 0) := x"0000_0000";
-	signal timeout_ctr : std_logic_vector(31 downto 0) := x"0000_0000";
+	signal timeout_value : std_logic_vector(31 downto 0) := x"0000_0000";
 
 	signal my_ip       : std_logic_vector(31 downto 0);
 
@@ -130,13 +129,11 @@ begin
 	vendor_values2(47 downto 16)  <= saved_server_ip;
 
 	constants_sim_gen : if SIMULATE = 1 generate
-		timeout_ctr <= x"0000_0500";
-		wait_ctr    <= x"0000_0010";
+		timeout_value <= x"0000_0500";
 	end generate constants_sim_gen;
 	
 	constants_impl_gen : if SIMULATE = 0 generate
-		timeout_ctr <= x"2000_0000";
-		wait_value  <= x"2000_0000";
+		timeout_value <= x"2000_0000";
 	end generate constants_impl_gen;
 
 	--*****************
@@ -182,7 +179,7 @@ begin
 		end if;
 	end process MAIN_MACHINE_PROC;
 
-	MAIN_MACHINE : process(main_current_state, DHCP_START_IN, construct_current_state, wait_ctr, receive_current_state, PS_DATA_IN, wait_value, timeout_ctr)
+	MAIN_MACHINE : process(main_current_state, DHCP_START_IN, construct_current_state, wait_ctr, receive_current_state, PS_DATA_IN, timeout_value)
 	begin
 		case (main_current_state) is
 			when BOOTING =>
@@ -193,7 +190,7 @@ begin
 				end if;
 
 			when DELAY =>
-				if (wait_ctr = wait_value) then
+				if (wait_ctr = timeout_value) then
 					main_next_state <= SENDING_DISCOVER;
 				else
 					main_next_state <= DELAY;
@@ -209,7 +206,7 @@ begin
 			when WAITING_FOR_OFFER =>
 				if (receive_current_state = SAVE_VALUES) and (PS_DATA_IN(8) = '1') then
 					main_next_state <= SENDING_REQUEST;
-				elsif (wait_ctr = timeout_ctr) then
+				elsif (wait_ctr = timeout_value) then
 					main_next_state <= BOOTING;
 				else
 					main_next_state <= WAITING_FOR_OFFER;
@@ -225,7 +222,7 @@ begin
 			when WAITING_FOR_ACK =>
 				if (receive_current_state = SAVE_VALUES) and (PS_DATA_IN(8) = '1') then
 					main_next_state <= ESTABLISHED;
-				elsif (wait_ctr = timeout_ctr) then
+				elsif (wait_ctr = timeout_value) then
 					main_next_state <= BOOTING;
 				else
 					main_next_state <= WAITING_FOR_ACK;
