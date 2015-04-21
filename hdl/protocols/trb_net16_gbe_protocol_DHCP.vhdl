@@ -597,14 +597,24 @@ begin
 					for i in 0 to 7 loop
 						tc_data(i) <= vendor_values((load_ctr - 236) * 8 + i);
 					end loop;
-					tc_data(8) <= '0';
+					
+					if (load_ctr = 257) then
+						tc_data(8) <= '1';
+					else
+						tc_data(8) <= '0';
+					end if;
 
 				-- needed only for DHCP Request message
 				when VENDOR_VALS2 =>
 					for i in 0 to 7 loop
 						tc_data(i) <= vendor_values2((load_ctr - 258) * 8 + i);
 					end loop;
-					tc_data(8) <= '0';
+					
+					if (load_ctr = 263) then
+						tc_data(8) <= '1';
+					else
+						tc_data(8) <= '0';
+					end if;
 
 				when TERMINATION =>
 					tc_data(7 downto 0) <= x"ff";
